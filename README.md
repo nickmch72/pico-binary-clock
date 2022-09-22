@@ -17,9 +17,12 @@ Optional:
 Pico W board must have [MicroPython](https://micropython.org/) installed on it - a Pimoroni [custom build](https://github.com/pimoroni/pimoroni-pico/releases/tag/1.19.7) of MicroPython is used for this project. You might want to take a look at their [Getting started with Raspberry Pi Pico](https://learn.pimoroni.com/article/getting-started-with-pico) for instructions how to install the firmware on the Pico board. 
 NOTE: There are difrent firmwares for Pico and **Pico W** boards!
 
-## Code
+## Source code
+
 ds3231.py - a slightly modified version of the [demo code](https://www.waveshare.com/wiki/Pico-RTC-DS3231) for the Precision RTC Module.
+
 secrets.py - set here SSID and pasword for your local WiFi network before upload the file to the board
+
 main.py - source code of the clock.
 
 NOTES:
