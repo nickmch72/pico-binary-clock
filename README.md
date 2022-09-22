@@ -47,6 +47,6 @@ NOTES:
 
 ## Ideas for improvement
 1. Make the clock asynchronous.
-2. Pico Display has 4 hardware buttons. They can be used to set date and time.manually
+2. Pico Display has 4 hardware buttons. They can be used to set date and time manually.
 3. Alarm ...
 4. Timer ...
