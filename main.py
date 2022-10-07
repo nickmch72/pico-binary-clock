@@ -155,14 +155,17 @@ def main():
 
     led.on()
     
-    # Try to get current time from intenet
-    connect_to_network()
-    web_time = get_web_time('Europe', 'London') # Change this to correct location
+    try:
+        # Try to get current time from intenet
+        connect_to_network()
+        web_time = get_web_time('Europe', 'London') # Change this to correct location
 
-    print('Setting time to %s' % web_time)
-    rtc.set_time(web_time)
-    #current_time = rtc.read_time()
-    #print('Current time is %s' % current_time)
+        print('Setting time to %s' % web_time)
+        rtc.set_time(web_time)
+        #current_time = rtc.read_time()
+        #print('Current time is %s' % current_time)
+    except:
+        print('Can''t get time from Internet')
 
     # draw grid amd labels
     grid = GRID(WIDTH, HEIGHT, 7, 7, 30, 15)

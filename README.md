@@ -25,12 +25,10 @@ secrets.py - set here SSID and password for your local WiFi network before uploa
 
 main.py - source code of the clock.
 
-NOTES:
+NOTE:
 1. When the board is started the program will try to connect to the local WiFi network (**update secrets.py**) and get the current date-time from [WorldTimeAPI](http://worldtimeapi.org). You might want to update the Time Zone for your location - take a look at line 160 of main.py:
 
         web_time = get_web_time('Europe', 'London') # Change this to correct location
-
-2. The program will exit if it does not succeed to connect to the WiFi network (the clock will not start).
 
 ## How to install
 1. Clone the repository:
