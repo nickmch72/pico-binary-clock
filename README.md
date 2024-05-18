@@ -14,7 +14,7 @@ Optional:
 
 ## Firmware
 
-Pico W board must have [MicroPython](https://micropython.org/) installed on it - a Pimoroni [custom build](https://github.com/pimoroni/pimoroni-pico/releases/tag/1.19.7) of MicroPython is used for this project. You might want to take a look at their [Getting started with Raspberry Pi Pico](https://learn.pimoroni.com/article/getting-started-with-pico) for instructions how to install the firmware on the Pico board. 
+Pico W board must have [MicroPython](https://micropython.org/) installed on it - a Pimoroni [custom build](https://github.com/pimoroni/pimoroni-pico/releases) of MicroPython is used for this project. You might want to take a look at their [Getting started with Raspberry Pi Pico](https://learn.pimoroni.com/article/getting-started-with-pico) for instructions how to install the firmware on the Pico board. 
 NOTE: There are different firmwares for Pico and **Pico W** boards!
 
 ## Source code
@@ -44,7 +44,6 @@ NOTE:
 4. Upload the code (all 3 files) on the board - use [Thonny](https://thonny.org) or [rshell](https://github.com/dhylands/rshell) for this
 
 ## Ideas for improvement
-1. Make the clock asynchronous.
-2. Pico Display has 4 hardware buttons. They can be used to set date and time manually.
-3. Alarm ...
-4. Timer ...
+1. Pico Display has 4 hardware buttons. They can be used to set date and time manually.
+2. Alarm ...
+3. Chronometer ...

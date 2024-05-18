@@ -1,22 +1,14 @@
-import time
-from machine import Pin
+from machine import Pin, Timer
 from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY
+from ds3231 import ds3231, I2C_PORT, I2C_SCL, I2C_SDA
 
-import secrets
+import time
 import network
 import urequests
 
-# Initialize hardware components
-led = Pin("LED", Pin.OUT, value=0)
+import secrets
 
-display = PicoGraphics(display=DISPLAY_PICO_DISPLAY, rotate=0)
-WIDTH, HEIGHT = display.get_bounds()
-display.set_backlight(1.0)
-display.set_font("serif")
-
-wlan = network.WLAN(network.STA_IF)
-
-def connect_to_network():
+def connect_to_network(wlan):
     wlan.active(True)
     wlan.config(pm = 0xa11140)  # Disable power-save mode
     wlan.connect(secrets.SSID, secrets.PASSWORD)
@@ -38,17 +30,18 @@ def connect_to_network():
 
 def get_web_time(zone, city):
     WD =[ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ]
-    
+
     web_time = urequests.get("http://worldtimeapi.org/api/timezone/{z}/{c}".format(z=zone, c=city)).json()
     dt = web_time['datetime']
     new_datetime = '{h:02d}:{m:02d}:{s:02d},{day},{Y:04d}-{M:02d}-{D:02d}'.format(h=int(dt[11]+dt[12]), m=int(dt[14]+dt[15]), s=int(dt[17]+dt[18]), day=WD[int(web_time['day_of_week'])], Y=int(dt[0]+dt[1]+dt[2]+dt[3]), M=int(dt[5]+dt[6]), D=int(dt[8]+dt[9]))
 
     return new_datetime
 
-def display_datetime(year, month, day, hour, minute, second):
+def display_datetime(display, year, month, day, hour, minute, second):
     # Clear datetime
     display.set_pen(0)
-    display.rectangle(0, 0, WIDTH, 10)
+    (width, height) = display.get_bounds()
+    display.rectangle(0, 0, width, 10)
 
     # Display current datetime
     display.set_pen(255)
@@ -69,8 +62,8 @@ class GRID:
         self.y0 = int((display_height - self.height) / 2) + 7
         self.xMax = self.x0 + self.width
         self.yMax = self.y0 + self.height
-    
-def draw_grid(grid):
+
+def draw_grid(display, grid):
     display.set_pen(255) # White
     # draw vertical lines
     for i in range(grid.columns + 1):
@@ -87,12 +80,12 @@ def draw_grid(grid):
     for i in range(grid.columns-1):
         display.text(labels[i], grid.x0 + (i+1)*grid.dX + 10, grid.y0 + 8, scale = 0.5)
 
-    # draw vertical labels    
+    # draw vertical labels
     labels = ['32', '16', '08', '04', '02', '01']
     for i in range(grid.rows-1):
         display.text(labels[i], grid.x0 + 6, grid.y0 + (i+1)*grid.dY + 8, scale = 0.5)
 
-def draw_clock(grid, year, month, day, hours, minutes, seconds):
+def draw_clock(display, grid, year, month, day, hours, minutes, seconds):
     def draw_elipse(digit, x, y):
         if digit == '1':
             display.circle(x-1, y, 5)
@@ -113,7 +106,6 @@ def draw_clock(grid, year, month, day, hours, minutes, seconds):
     hours_str   = "{H:06b}".format(H=hours)
     minutes_str = "{m:06b}".format(m=minutes)
     seconds_str = "{s:06b}".format(s=seconds)
-    #print(year_str month_str day_str hours_str minutes_str seconds_str)
 
     # draw elipsies
     display.set_pen(60) # Green
@@ -133,7 +125,6 @@ def draw_clock(grid, year, month, day, hours, minutes, seconds):
                 draw_elipse(month_str[row], x, y)
             elif (column == 1): # Seconds
                 draw_elipse(year_str[row], x, y)
-
     display.update()
 
 def get_local_time(current_time):
@@ -141,23 +132,43 @@ def get_local_time(current_time):
     dt = the_time.split(' ')
     date = dt[0].split('-')
     tm = dt[1].split(':')
-    
+
     return(int(date[0]), int(date[1]), int(date[2]), int(tm[0]), int(tm[1]), int(tm[2]), 0, 0)
 
 def print_date_time(year, month, day, hour, minute, second):
     date_time = "{Y:04d}-{M:02d}-{D:02d} {H:02d}:{m:02d}:{s:02d}".format(Y=year, M=month, D=day, H=hour, m=minute, s=second)
     print(date_time)
 
+def blink(led):
+    led.toggle()
+
+def show_time(rtc, display, grid):
+        (year, month, day, hour, minute, second, wday, yday) = get_local_time(rtc.read_time())
+        display_datetime(display, year, month, day, hour, minute, second)
+        draw_clock(display, grid, year, month, day, hour, minute, second)
+
 def main():
-    from ds3231 import ds3231, I2C_PORT, I2C_SCL, I2C_SDA
-    
+    # Initialize hardware components
+
+    # Start onboard LED blinking 1/2 Hz
+    pico_led = Pin("LED", Pin.OUT, value=0)
+    led_timer = Timer()
+    led_timer.init(freq=2, mode=Timer.PERIODIC, callback=lambda tl: blink(pico_led))
+
+    # Initialize display
+    display = PicoGraphics(display=DISPLAY_PICO_DISPLAY, rotate=0)
+    WIDTH, HEIGHT = display.get_bounds()
+    display.set_backlight(1.0)
+    display.set_font("serif")
+
+    # Initialize RTC
     rtc = ds3231(I2C_PORT, I2C_SCL, I2C_SDA)
 
-    led.on()
-    
+    # Get time from internet
+    wlan = network.WLAN(network.STA_IF)
     try:
         # Try to get current time from intenet
-        connect_to_network()
+        connect_to_network(wlan)
         web_time = get_web_time('Europe', 'London') # Change this to correct location
 
         print('Setting time to %s' % web_time)
@@ -167,18 +178,11 @@ def main():
     except:
         print('Can''t get time from Internet')
 
-    # draw grid amd labels
+    # draw grid and labels
     grid = GRID(WIDTH, HEIGHT, 7, 7, 30, 15)
-    draw_grid(grid)
-    
-    while True:
-        led.on()
-        (year, month, day, hour, minute, second, wday, yday) = get_local_time(rtc.read_time())
-        display_datetime(year, month, day, hour, minute, second)
-        draw_clock(grid, year, month, day, hour, minute, second)
+    draw_grid(display, grid)
 
-        time.sleep(0.4)
-        led.off()
-        time.sleep(0.5)
+    clock_timer = Timer()
+    clock_timer.init(freq=1, mode=Timer.PERIODIC, callback=lambda tl: show_time(rtc, display, grid))
 
 main()
